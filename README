@@ -1,0 +1,217 @@
+
+#Project Folder Structure
+
+FORGEMANAGERAPS/
+│── input/                     # Stores input files required for processing
+│── outputFiles/                # Stores generated output files (results, exports, etc.)
+│── services/                   # Core business logic and service layer
+│   │── Checking_image.ts       # Service to validate and check uploaded images
+│   │── Deleteupload_files.ts   # Handles deletion of uploaded files
+│   │── download.ts             # Provides file download functionalities
+│   │── forgeOutputs.ts         # Manages Forge output file operations
+│   │── uploadService.ts        # Handles file upload logic
+│   │── workItemService.ts      # Manages APS/Forge workitem creation and tracking
+│── uploads/                    # Temporary storage for uploaded files
+│── utils/                      # Utility/helper functions
+│── .env                        # Environment configuration file
+│── ForgeManager.ts             # Main Forge Manager service
+│── ForgeManagerRoutes.ts       # Defines API routes for Forge-related operations
+│── index.ts                    # Application entry point
+│── package.json                # Project dependencies and scripts
+│── package-lock.json           # Dependency lock file
+│── Revit_Template_Metric.rvt   # Sample Revit template used in processing
+│── tsconfig.json               # TypeScript configuration
+
+
+
+services/             -> Contains all the core logic for interacting with Autodesk APS/Forge (uploads, downloads, work items, outputs).
+uploads/              -> Temporary storage location for incoming files before processing.
+outputFiles/          -> Stores processed/generated results after Forge workitems.
+ForgeManagerRoutes.ts -> Exposes API endpoints to interact with the services.
+index.ts              ->   The main entry point that bootstraps the application.
+
+
+##  Getting Started
+
+After downloading and extracting the Forge Manager.zip file, open a command prompt inside the project folder and run the command:
+
+##bash
+npm install
+
+This will download all required node\_modules.
+Once the installation is complete, start the server by running:
+
+##bash
+npm run dev
+
+
+##Postman
+After the server is up and running, open Postman and call the following endpoint:
+
+https://<your-hosted-url>/forge/submit-workitem
+
+For example:
+
+https://397fed96ecd.ngrok-free.app/forge/submit-workitem
+
+
+#1.index.ts
+
+   In the index.ts file, I set up the entry point of the application.
+
+   #Created the Main Route
+
+    1.I defined the base API route as /forge.
+
+    2.This means all Forge-related endpoints (like submitting work items, uploading files, or downloading outputs) will be accessed through this main route.
+
+   #Connected to ngrok
+
+    1.I configured the server to work with ngrok, which exposes the local server to the internet with a public URL.
+    2.This allows APIs like /forge/submit-workitem to be tested and used externally (e.g., from Postman or Autodesk APS callbacks).
+
+   #Started the Server
+
+    Finally, I made sure the server starts running on the specified port and is accessible via both localhost and the ngrok public URL.
+
+#2.ForgeManagerRoutes.ts
+
+    The ForgeManagerRoutes.ts file defines all the API routes that connect the client (Postman, frontend, or external services) to the Forge services 
+    implemented in the backend.
+
+    #Routes Overview
+
+    a)POST /token
+      Generates a new Forge access token to authenticate requests.
+
+    b)POST /signed-url
+      Creates a signed URL for secure file uploads to Forge buckets.
+
+    c)POST /upload-input-files
+      Uploads input files (such as Revit models) to the server/Forge for processing.
+
+    d)POST /generate-output-urls
+      Generates URLs for accessing output files produced by Forge.
+    
+    e)POST /submit-workitem1
+      Submits a Forge work item (job) for execution. (Alternate route for testing work item submission).
+
+    f)POST /callback/designautomation
+      Callback route for Forge Design Automation API.
+      Forge will send job completion status and results back to this route after processing.
+
+    g)POST /submit-workitem (Main Route)
+      Handles work item submission with file upload. This is the primary route for sending jobs to Forge.
+
+    h)GET /download
+      Allows downloading of generated or processed output files.
+
+#3Forge Manager.ts
+
+    The `ForgeManager.ts` file is responsible for handling **Autodesk APS (Forge) integration. It provides helper functions to
+    manage authentication, file uploads, and work item submission to Forge.
+
+    #Functions
+
+    a)generateForgeAccessToken()
+      Generates an authentication token to securely communicate with Autodesk APS (Forge) APIs.
+ 
+    b)generateSignedURL()
+      Creates a signed URL for uploading files directly to Forge buckets without exposing sensitive credentials.
+
+    c)uploadFileToSignedUrl(signedUrl: string, filePath: string)
+      Uploads a local file to Forge using the provided signed URL.
+
+      `signedUrl`: Pre-generated secure upload link
+      `filePath`: Path of the local file to be uploaded
+
+    d)completeForgeUpload()
+      Finalizes the file upload process, confirming that the file was successfully transferred to Forge storage.
+
+    e)submitRevitWorkItem(callbackURL: string)
+      Submits a Revit work item (job) to Autodesk APS for processing.
+
+    f)`callbackURL`: The endpoint where Forge will send the job completion status and output files.
+
+
+
+    ## Workflow (High-Level)
+
+    1. Generate an access token.
+    2. Request a signed URL for file upload.
+    3. Upload the input file to Forge storage.
+    4. Complete the upload to finalize.
+    5. Submit a work item (e.g., Revit job) with a callback URL to get results.      
+
+#4Services Folder
+
+    The services folder is the core logic layer of the application. It contains modular TypeScript files, each responsible for handling
+    a specific functionality of the Autodesk APS (Forge) workflow.
+
+    a)Checking_image.ts
+      Responsible for validating uploaded images to ensure they meet the required format or constraints before further processing.
+
+    b)Deleteupload_files.ts
+      Provides functionality to remove previously uploaded files from the server to free storage and maintain a clean workspace.
+
+    c)download.ts
+      Implements file download features, allowing users to retrieve generated outputs or stored files from the server.
+
+    d)forgeOutputs.ts
+      Handles the management of output files produced by Forge (APS) workflows, ensuring they are stored and accessible for download.
+
+    e)uploadService.ts
+      Manages file uploads from clients to the server or Forge, preparing them as inputs for further processing.
+
+    f)workItemService.ts
+      Responsible for creating, submitting, and tracking work items in Autodesk APS. A work item represents a job/task sent to Forge for
+      execution.
+
+#5.Environment Variables (.env)
+
+    The project uses a .env file to store configuration values required for Autodesk APS (Forge) integration.
+
+    a)FORGE_CLIENT_ID
+      The Client ID of your Autodesk Forge application.
+
+    b)FORGE_CLIENT_SECRET
+      The Client Secret of your Autodesk Forge application. (Keep this private.)
+
+    c)FORGE_BUCKET_ID
+      The Forge OSS bucket where files will be stored.
+
+    d)INPUT_REVIT_FILE_URL
+      Local path of the Revit template file (.rvt) to be uploaded for processing.
+
+    e)INPUT_PARAMS_ZIP_URL
+      Local path of the input parameters zip file (used for Design Automation jobs).
+
+    f)HOST_DOMAIN_URL
+      The public ngrok URL where Forge sends job completion callbacks.
+
+    g)FORGE_WORKITEMS_ACTIVITY_ID
+      The ID of the Forge Activity that defines which app bundle and script will run in the Design Automation work item.
+
+    h)FILE_OBJECT_ID
+      Forge OSS object ID (URN) used to identify the uploaded input file in the bucket.
+
+    i)OUTPUT_FILE_RVT
+      Name of the Revit output file generated by the job.
+
+    j)OUTPUT_FILE_DWG
+      Name of the DWG output file generated by the job.
+
+    k)OUTPUT_FILE_TITLEBLOCK_RVT
+      Name of the signed title block Revit file generated.
+
+    L)OUTPUT_FILE_DWG_IMG
+      Name of the PNG image generated from the DWG output.
+
+    m)NGROK_AUTHTOKEN
+      Authentication token for ngrok, used to generate a public URL for callbacks and API testing.
+
+
+
+
+
+
